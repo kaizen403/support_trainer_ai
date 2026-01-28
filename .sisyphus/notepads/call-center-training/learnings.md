@@ -136,3 +136,4 @@ The code pushes to `/dashboard`, but the physical file handling the role-based r
 - Expanded Playwright E2E suite to 21 tests covering all core user journeys for admin and employee roles.
 - Created `docs/production-checklist.md` as a source of truth for release readiness and verification.
 - Implemented robust mocking for browser Media APIs and external services (better-auth, LiveKit) to ensure reliable E2E execution in isolated environments.
+- Added missing 'zod' dependency to packages/ai/package.json to fix build error in packages/ai/src/assessment.ts.

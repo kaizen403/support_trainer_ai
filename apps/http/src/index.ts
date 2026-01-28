@@ -11,7 +11,7 @@ const app = express();
 const port = env.PORT_HTTP;
 
 app.use(cors({
-  origin: env.BETTER_AUTH_URL,
+  origin: [env.BETTER_AUTH_URL, "http://localhost:3000"],
   credentials: true,
 }));
 

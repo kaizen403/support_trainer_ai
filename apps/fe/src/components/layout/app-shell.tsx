@@ -1,5 +1,6 @@
+"use client"
+
 import { Sidebar } from "./sidebar"
-import { Header } from "./header"
 
 interface AppShellProps {
   children: React.ReactNode
@@ -7,13 +8,17 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="flex min-h-screen w-full">
-      <div className="hidden border-r bg-background lg:block lg:w-60">
+    <div className="flex min-h-screen w-full bg-black">
+      {/* Subtle gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-zinc-950 to-black pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-900/20 via-transparent to-transparent pointer-events-none" />
+
+      <div className="hidden lg:block fixed left-0 top-0 z-40">
         <Sidebar />
       </div>
-      <div className="flex flex-col flex-1">
-        <Header />
-        <main className="flex-1 p-8 pt-6">
+
+      <div className="flex flex-col flex-1 lg:ml-64 relative">
+        <main className="flex-1 p-6">
           {children}
         </main>
       </div>

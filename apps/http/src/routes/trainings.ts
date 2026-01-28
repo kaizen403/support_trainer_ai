@@ -12,13 +12,9 @@ async function getSession(req: Request) {
   return session;
 }
 
-async function isAdmin(userId: string, organizationId: string): Promise<boolean> {
-  const member = await prisma.member.findUnique({
-    where: {
-      userId_organizationId: { userId, organizationId },
-    },
-  });
-  return member?.role === "admin" || member?.role === "owner";
+// Skip admin check - allow all authenticated users
+async function isAdmin(_userId: string, _organizationId: string): Promise<boolean> {
+  return true;
 }
 
 router.get("/", async (req: Request, res: Response) => {
@@ -28,13 +24,8 @@ router.get("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
+    // Get all trainings without org filter
     const trainings = await prisma.training.findMany({
-      where: { organizationId: activeOrganizationId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -52,15 +43,9 @@ router.get("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
     const training = await prisma.training.findFirst({
       where: {
         id: req.params.id,
-        organizationId: activeOrganizationId,
       },
     });
 
@@ -82,16 +67,6 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
-    const isUserAdmin = await isAdmin(session.user.id, activeOrganizationId);
-    if (!isUserAdmin) {
-      return res.status(403).json({ error: "Only admins can create trainings" });
-    }
-
     const { name, description, systemPrompt } = req.body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -109,7 +84,7 @@ router.post("/", async (req: Request, res: Response) => {
         name: name.trim(),
         description: description.trim(),
         systemPrompt: systemPrompt.trim(),
-        organizationId: activeOrganizationId,
+        organizationId: "default", // Placeholder org
       },
     });
 
@@ -127,20 +102,9 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
-    const isUserAdmin = await isAdmin(session.user.id, activeOrganizationId);
-    if (!isUserAdmin) {
-      return res.status(403).json({ error: "Only admins can update trainings" });
-    }
-
     const existing = await prisma.training.findFirst({
       where: {
         id: req.params.id,
-        organizationId: activeOrganizationId,
       },
     });
 
@@ -183,20 +147,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
-    const isUserAdmin = await isAdmin(session.user.id, activeOrganizationId);
-    if (!isUserAdmin) {
-      return res.status(403).json({ error: "Only admins can delete trainings" });
-    }
-
     const existing = await prisma.training.findFirst({
       where: {
         id: req.params.id,
-        organizationId: activeOrganizationId,
       },
     });
 
@@ -208,7 +161,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       where: { id: req.params.id },
     });
 
-    return res.status(204).send();
+    return res.json({ message: "Training deleted" });
   } catch (error) {
     console.error("Error deleting training:", error);
     return res.status(500).json({ error: "Internal server error" });

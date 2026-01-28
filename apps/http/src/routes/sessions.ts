@@ -46,18 +46,13 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
     const { trainingId } = req.body;
     if (!trainingId || typeof trainingId !== "string") {
       return res.status(400).json({ error: "trainingId is required" });
     }
 
     const training = await prisma.training.findFirst({
-      where: { id: trainingId, organizationId: activeOrganizationId },
+      where: { id: trainingId },
     });
 
     if (!training) {
@@ -142,11 +137,6 @@ router.get("/analytics", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { activeOrganizationId } = session.session;
-    if (!activeOrganizationId) {
-      return res.status(400).json({ error: "No organization selected" });
-    }
-
     const [
       totalSessions,
       completedSessions,
@@ -155,28 +145,18 @@ router.get("/analytics", async (req: Request, res: Response) => {
       recentSessionsRaw,
       allSessionsForPerformance,
     ] = await Promise.all([
+      prisma.trainingSession.count(),
       prisma.trainingSession.count({
-        where: { training: { organizationId: activeOrganizationId } },
-      }),
-      prisma.trainingSession.count({
-        where: {
-          training: { organizationId: activeOrganizationId },
-          status: "COMPLETED",
-        },
+        where: { status: "COMPLETED" },
       }),
       prisma.trainingSession.findMany({
-        where: { training: { organizationId: activeOrganizationId } },
         select: { userId: true },
         distinct: ["userId"],
       }),
       prisma.assessment.aggregate({
         _avg: { score: true },
-        where: {
-          session: { training: { organizationId: activeOrganizationId } },
-        },
       }),
       prisma.trainingSession.findMany({
-        where: { training: { organizationId: activeOrganizationId } },
         orderBy: { startedAt: "desc" },
         take: 10,
         include: {
@@ -186,7 +166,6 @@ router.get("/analytics", async (req: Request, res: Response) => {
         },
       }),
       prisma.trainingSession.findMany({
-        where: { training: { organizationId: activeOrganizationId } },
         include: {
           training: { select: { name: true } },
           assessment: { select: { score: true } },

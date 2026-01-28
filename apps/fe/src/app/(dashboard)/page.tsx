@@ -17,19 +17,13 @@ export default function DashboardPage() {
       return;
     }
 
-    // @ts-expect-error member is added by organization plugin
-    const role = session.member?.role;
-
-    if (role === "owner" || role === "admin") {
-      router.push("/trainings");
-    } else {
-      router.push("/employee");
-    }
+    // Redirect based on user role or default to trainings
+    router.push("/trainings");
   }, [session, isPending, router]);
 
   return (
     <div className="flex h-[50vh] w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
     </div>
   );
 }

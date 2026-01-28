@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "prebuild": "prisma generate",
     "build": "tsc",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -27,10 +28,13 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.10.1",
-    "@repo/config": "workspace:*"
+    "@repo/config": "workspace:*",
+    "better-auth": "^1.4.17"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "prisma": "^6.10.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
