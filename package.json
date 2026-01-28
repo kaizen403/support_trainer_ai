@@ -1,0 +1,20 @@
+{
+  "name": "turborepo-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.27.0",
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "build": "turbo build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "happy-dom": "^20.3.9",
+    "turbo": "^2.7.6",
+    "vitest": "^4.0.18"
+  }
+}
