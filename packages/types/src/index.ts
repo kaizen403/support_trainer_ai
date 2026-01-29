@@ -60,6 +60,7 @@ export interface KnowledgeDocument {
   filename: string;
   documentType: DocumentType;
   format: DocumentFormat;
+  ingestionStatus: IngestionStatus;
   content: string;
   embedding?: number[]; // vector(1536) for OpenAI ada-002
   createdAt: Date;
@@ -99,6 +100,8 @@ export type DocumentType =
   | 'other';
 
 export type DocumentFormat = 'pdf' | 'txt' | 'docx' | 'md';
+
+export type IngestionStatus = 'processing' | 'indexed' | 'failed';
 
 export type RecordingStatus = 'not_started' | 'recording' | 'completed' | 'failed';
 

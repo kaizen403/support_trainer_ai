@@ -147,6 +147,7 @@ model KnowledgeDocument {
   filename   String
   documentType DocumentType @default(OTHER)
   format     DocumentFormat @default(TXT)
+  ingestionStatus IngestionStatus @default(PROCESSING)
   content    String
   embedding  Unsupported("vector(1536)")? // OpenAI ada-002 embedding
   createdAt  DateTime                     @default(now())
@@ -219,6 +220,12 @@ enum RecordingStatus {
   NOT_STARTED
   RECORDING
   COMPLETED
+  FAILED
+}
+
+enum IngestionStatus {
+  PROCESSING
+  INDEXED
   FAILED
 }
 

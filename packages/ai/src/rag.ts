@@ -1,4 +1,8 @@
 import OpenAI from "openai";
+import mammoth from "mammoth";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import stripMarkdown from "strip-markdown";
 
 const openai = new OpenAI();
 
@@ -99,6 +103,31 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   } catch {
     throw new Error(
       "PDF parsing failed. Install pdf-parse: pnpm add pdf-parse"
+    );
+  }
+}
+
+export async function extractTextFromDocx(buffer: Buffer): Promise<string> {
+  try {
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value;
+  } catch {
+    throw new Error(
+      "DOCX parsing failed. Install mammoth: pnpm add mammoth"
+    );
+  }
+}
+
+export async function extractTextFromMarkdown(content: string): Promise<string> {
+  try {
+    const file = await unified()
+      .use(remarkParse)
+      .use(stripMarkdown)
+      .process(content);
+    return String(file).trim();
+  } catch {
+    throw new Error(
+      "Markdown parsing failed. Install remark-parse and strip-markdown"
     );
   }
 }

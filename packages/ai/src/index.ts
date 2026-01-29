@@ -1,6 +1,7 @@
 export * from './rag.js';
 export * from './conversation.js';
 export * from './assessment.js';
+export * from './persona.js';
 
 export interface AIConfig {
   provider: 'openai' | 'anthropic';
