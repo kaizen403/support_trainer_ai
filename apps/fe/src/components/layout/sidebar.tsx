@@ -7,6 +7,11 @@ import {
   LayoutDashboard,
   GraduationCap,
   BarChart2,
+  Activity,
+  Sliders,
+  Headphones,
+  LineChart,
+  Users,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -42,6 +47,31 @@ const navItems: NavItem[] = [
       { label: "All Trainings", href: "/trainings" },
       { label: "My Sessions", href: "/employee" },
     ],
+  },
+  {
+    label: "Training Command Center",
+    href: "/command-center",
+    icon: Activity,
+  },
+  {
+    label: "Scenario Configuration",
+    href: "/scenario-configuration",
+    icon: Sliders,
+  },
+  {
+    label: "Active Training",
+    href: "/active-training",
+    icon: Headphones,
+  },
+  {
+    label: "Performance Analytics",
+    href: "/performance-analytics",
+    icon: LineChart,
+  },
+  {
+    label: "Team Management",
+    href: "/team-management",
+    icon: Users,
   },
   {
     label: "Analytics",
