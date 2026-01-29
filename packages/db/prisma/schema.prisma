@@ -20,6 +20,8 @@ model User {
   sessions         Session[]
   members          Member[]
   trainingSessions TrainingSession[]
+  assignments      Assignment[]
+  assignmentsAssignedBy Assignment[] @relation("AssignmentAssignedBy")
 }
 
 model Session {
@@ -80,6 +82,8 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   trainings   Training[]
+  knowledgeDocuments KnowledgeDocument[]
+  personas    Persona[]
 }
 
 model Member {
@@ -123,26 +127,37 @@ model Training {
   name           String
   description    String
   systemPrompt   String // AI persona instructions
+  mode           TrainingMode @default(SIMULATION)
+  skillTags      String[] @default([])
+  config         Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   knowledgeDocuments KnowledgeDocument[]
   sessions           TrainingSession[]
+  assignments        Assignment[]
+  personas           Persona[]
 }
 
 model KnowledgeDocument {
   id         String                       @id @default(cuid())
-  trainingId String
+  trainingId String?
+  organizationId String?
   filename   String
+  documentType DocumentType @default(OTHER)
+  format     DocumentFormat @default(TXT)
   content    String
   embedding  Unsupported("vector(1536)")? // OpenAI ada-002 embedding
   createdAt  DateTime                     @default(now())
   updatedAt  DateTime                     @updatedAt
 
-  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  training     Training?    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  personas     Persona[]
 
   @@index([trainingId])
+  @@index([organizationId])
 }
 
 model TrainingSession {
@@ -151,13 +166,22 @@ model TrainingSession {
   userId        String
   avatarName    String // Generated AI customer name
   avatarPersona String // Generated personality
+  mode          TrainingMode @default(SIMULATION)
+  personaId     String?
+  personaSnapshot Json?
+  skillTags     String[] @default([])
   status        SessionStatus @default(ACTIVE)
   startedAt     DateTime      @default(now())
   endedAt       DateTime?
   transcript    Json? // Full conversation transcript
+  coachingNotes Json?
+  recordingUrl  String?
+  recordingStatus RecordingStatus @default(NOT_STARTED)
+  recordingMetadata Json?
 
   training   Training    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persona    Persona?    @relation(fields: [personaId], references: [id], onDelete: SetNull)
   assessment Assessment?
 
   @@index([userId, startedAt])
@@ -170,18 +194,98 @@ enum SessionStatus {
   ABANDONED
 }
 
+enum TrainingMode {
+  SIMULATION
+  GUIDED_INTERVIEW
+}
+
+enum DocumentType {
+  PRODUCT
+  PERSONA
+  SCRIPT
+  OBJECTION
+  POLICY
+  OTHER
+}
+
+enum DocumentFormat {
+  PDF
+  TXT
+  DOCX
+  MD
+}
+
+enum RecordingStatus {
+  NOT_STARTED
+  RECORDING
+  COMPLETED
+  FAILED
+}
+
 model Assessment {
   id           String   @id @default(cuid())
   sessionId    String   @unique
   score        Int // 0-100
+  overallScore Int?
+  clarityScore Int?
+  protocolAdherenceScore Int?
+  empathyScore Int?
+  conversionPotentialScore Int?
   feedback     String
   strengths    String[]
   improvements String[]
   categories   Json?
   highlights   Json?
+  coachingReport Json?
   createdAt    DateTime @default(now())
 
   session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+}
+
+model Persona {
+  id             String   @id @default(cuid())
+  organizationId String
+  trainingId     String?
+  name           String
+  description    String
+  traits         Json?
+  tags           String[] @default([])
+  sourceDocumentId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  training     Training?    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  sourceDocument KnowledgeDocument? @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+  sessions     TrainingSession[]
+
+  @@index([organizationId])
+  @@index([trainingId])
+}
+
+model Assignment {
+  id           String   @id @default(cuid())
+  trainingId   String
+  userId       String
+  assignedById String?
+  status       AssignmentStatus @default(ASSIGNED)
+  dueAt        DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy User?    @relation("AssignmentAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@index([trainingId])
+  @@index([userId])
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

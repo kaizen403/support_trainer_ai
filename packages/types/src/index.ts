@@ -46,14 +46,20 @@ export interface Training {
   name: string;
   description: string;
   systemPrompt: string;
+  mode: TrainingMode;
+  skillTags: string[];
+  config?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface KnowledgeDocument {
   id: string;
-  trainingId: string;
+  trainingId?: string;
+  organizationId?: string;
   filename: string;
+  documentType: DocumentType;
+  format: DocumentFormat;
   content: string;
   embedding?: number[]; // vector(1536) for OpenAI ada-002
   createdAt: Date;
@@ -66,13 +72,35 @@ export interface TrainingSession {
   userId: string;
   avatarName: string;
   avatarPersona: string;
+  mode: TrainingMode;
+  personaId?: string;
+  personaSnapshot?: Record<string, unknown>;
+  skillTags: string[];
   status: SessionStatus;
   startedAt: Date;
   endedAt?: Date;
   transcript?: TranscriptData;
+  coachingNotes?: Record<string, unknown>;
+  recordingUrl?: string;
+  recordingStatus: RecordingStatus;
+  recordingMetadata?: Record<string, unknown>;
 }
 
 export type SessionStatus = 'active' | 'completed' | 'abandoned';
+
+export type TrainingMode = 'simulation' | 'guided_interview';
+
+export type DocumentType =
+  | 'product'
+  | 'persona'
+  | 'script'
+  | 'objection'
+  | 'policy'
+  | 'other';
+
+export type DocumentFormat = 'pdf' | 'txt' | 'docx' | 'md';
+
+export type RecordingStatus = 'not_started' | 'recording' | 'completed' | 'failed';
 
 export interface TranscriptData {
   messages: TranscriptMessage[];
@@ -96,11 +124,43 @@ export interface Assessment {
   id: string;
   sessionId: string;
   score: number; // 0-100
+  overallScore?: number;
+  clarityScore?: number;
+  protocolAdherenceScore?: number;
+  empathyScore?: number;
+  conversionPotentialScore?: number;
   feedback: string;
   strengths: string[];
   improvements: string[];
+  coachingReport?: Record<string, unknown>;
   createdAt: Date;
 }
+
+export interface Persona {
+  id: string;
+  organizationId: string;
+  trainingId?: string;
+  name: string;
+  description: string;
+  traits?: Record<string, unknown>;
+  tags: string[];
+  sourceDocumentId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Assignment {
+  id: string;
+  trainingId: string;
+  userId: string;
+  assignedById?: string;
+  status: AssignmentStatus;
+  dueAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type AssignmentStatus = 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
 // =============================================================================
 // API Types
@@ -180,16 +240,24 @@ export interface CreateTrainingInput {
   name: string;
   description: string;
   systemPrompt: string;
+  mode?: TrainingMode;
+  skillTags?: string[];
+  config?: Record<string, unknown>;
 }
 
 export interface UpdateTrainingInput {
   name?: string;
   description?: string;
   systemPrompt?: string;
+  mode?: TrainingMode;
+  skillTags?: string[];
+  config?: Record<string, unknown>;
 }
 
 export interface CreateSessionInput {
   trainingId: string;
+  mode?: TrainingMode;
+  personaId?: string;
 }
 
 export interface EndSessionInput {
