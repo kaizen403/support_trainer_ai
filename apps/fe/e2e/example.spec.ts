@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Task 18 E2E Scenarios', () => {
-  test.beforeEach(async ({ page, context }) => {
+  test.beforeEach(async ({ page }) => {
     await page.route('**/api/auth/**', async (route) => {
       const url = route.request().url();
       if (url.includes('session') || url.includes('get-session')) {
@@ -70,7 +70,7 @@ test.describe('Task 18 E2E Scenarios', () => {
       window.webkitAudioContext = MockAudioContext;
     });
 
-    await context.addCookies([{
+    await page.context().addCookies([{
       name: 'better-auth.session_token',
       value: 'mock-token',
       url: 'http://localhost:3000',
@@ -102,7 +102,7 @@ test.describe('Task 18 E2E Scenarios', () => {
     await page.getByLabel('Password').fill('password123');
 
     const authPromise = page.waitForResponse('**/api/auth/**');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'Sign in' }).click();
     await authPromise;
     await expect(page).toHaveURL(/\/(login|dashboard)/, { timeout: 15000 });
   });
@@ -134,7 +134,7 @@ test.describe('Task 18 E2E Scenarios', () => {
     });
 
     await page.goto('/trainings');
-    await page.getByRole('button', { name: 'New Training' }).click();
+    await page.getByRole('main').getByRole('button', { name: 'New Training' }).click();
     
     await page.getByLabel('Name').fill('Sales Objection Handling');
     await page.getByLabel('Description').fill('Learn how to handle common sales objections.');
@@ -347,7 +347,7 @@ test.describe('Task 18 E2E Scenarios', () => {
     await expect(page.getByRole('button', { name: 'Start Session' })).toBeEnabled();
   });
 
-  test('session prepare shows denied state on permission failure', async ({ page, context }) => {
+  test('session prepare shows denied state on permission failure', async ({ page }) => {
     const sessionId = 'session-denied';
     
     await page.addInitScript(() => {
@@ -504,7 +504,7 @@ test.describe('Task 18 E2E Scenarios', () => {
     await expect(page.getByText('Latest Session')).toBeVisible();
   });
 
-  test('trainings page shows empty state for non-admin', async ({ page, context }) => {
+  test('trainings page shows empty state for non-admin', async ({ page }) => {
     await page.route('**/api/auth/**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -527,7 +527,7 @@ test.describe('Task 18 E2E Scenarios', () => {
 
     await page.goto('/trainings');
     await expect(page.getByText('No training scenarios have been created yet.')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'New Training' })).toBeHidden();
+    await expect(page.getByRole('main').getByRole('button', { name: 'New Training' })).toBeHidden();
   });
 
   test('training detail page loads knowledge base', async ({ page }) => {
@@ -681,6 +681,32 @@ test.describe('Task 18 E2E Scenarios', () => {
     await expect(page.getByText('88% avg')).toBeVisible();
   });
 
+  test('sidebar shows training modules', async ({ page }) => {
+    await page.route('**/api/trainings', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/sessions', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.goto('/trainings');
+
+    await expect(page.getByText('Training Command Center')).toBeVisible();
+    await expect(page.getByText('Scenario Configuration')).toBeVisible();
+    await expect(page.getByText('Active Training')).toBeVisible();
+    await expect(page.getByText('Performance Analytics')).toBeVisible();
+    await expect(page.getByText('Team Management')).toBeVisible();
+  });
+
   test('logout flow redirects to login', async ({ page }) => {
     let loggedOut = false;
 
@@ -730,10 +756,8 @@ test.describe('Task 18 E2E Scenarios', () => {
 
     await page.goto('/employee');
     await expect(page.getByText('Employee Dashboard')).toBeVisible({ timeout: 15000 });
-    
-    await page.locator('button').filter({ has: page.locator('span.relative') }).first().click();
-    
-    await page.getByText('Log out').click();
+
+    await page.getByRole('button', { name: 'Logout' }).click();
     
     await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
   });

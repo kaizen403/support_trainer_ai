@@ -66,9 +66,10 @@ export default function TrainingsPage() {
     systemPrompt: "",
   });
 
-  // Check if user is admin/owner - default to true if session exists (for demo)
-  // In production, this should check session.member.role
-  const isAdmin = session ? true : false;
+  const role = session && "member" in session
+    ? (session.member as { role?: string } | undefined)?.role
+    : undefined;
+  const isAdmin = role === "admin" || role === "owner";
 
   const fetchTrainings = async () => {
     try {
