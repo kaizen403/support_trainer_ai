@@ -26,6 +26,8 @@ interface RoomMetadata {
   systemPrompt?: string;
   avatar?: AvatarProfile;
   topK?: number;
+  mode?: "simulation" | "guided_interview";
+  personaId?: string;
 }
 
 const conversationGraph = createConversationGraph({
@@ -119,11 +121,13 @@ class GraphStream extends llm.LLMStream {
 
   protected async run(): Promise<void> {
     const avatar = this.metadata.avatar ?? generateAvatarProfile();
+    const mode = this.metadata.mode ?? "simulation";
     const state = {
       messages: toConversationMessages(this.chatCtx),
       trainingId: this.metadata.trainingId ?? "",
       systemPrompt: this.metadata.systemPrompt ?? "",
       avatar,
+      mode,
       topK: this.metadata.topK ?? 5,
       ragResults: [],
     };
@@ -159,9 +163,13 @@ export default defineAgent({
         });
     };
 
+    const modeInstruction =
+      metadata.mode === "guided_interview"
+        ? "You are a call center training interviewer. Ask concise, structured questions and wait for trainee responses."
+        : `You are ${avatar.name}. ${avatar.persona} Keep responses concise and actionable.`;
+
     const agent = new voice.Agent({
-      instructions:
-        `You are ${avatar.name}. ${avatar.persona} Keep responses concise and actionable.`,
+      instructions: modeInstruction,
     });
 
     const session = new voice.AgentSession({
