@@ -12,6 +12,7 @@ import {
 import { env } from "@repo/config";
 import { prisma } from "@repo/db";
 import { auth } from "../auth.js";
+import { resolveTrainingMode, toGraphMode } from "../lib/sessions.js";
 
 const router = Router();
 const roomService = new RoomServiceClient(
@@ -19,6 +20,37 @@ const roomService = new RoomServiceClient(
   env.LIVEKIT_API_KEY,
   env.LIVEKIT_API_SECRET
 );
+
+async function selectPersona(
+  organizationId: string,
+  personaId?: string
+): Promise<{ persona: any | null; avatar: AvatarProfile }>{
+  const avatar = generateAvatarProfile();
+  let persona = null;
+
+  if (personaId) {
+    persona = await prisma.persona.findFirst({
+      where: { id: personaId, organizationId },
+    });
+  }
+
+  if (!persona) {
+    const candidates = await prisma.persona.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (candidates.length > 0) {
+      persona = candidates[Math.floor(Math.random() * candidates.length)];
+    }
+  }
+
+  if (persona) {
+    avatar.name = persona.name;
+    avatar.persona = persona.description;
+  }
+
+  return { persona, avatar };
+}
 
 async function getSession(req: Request) {
   const session = await auth.api.getSession({
@@ -46,7 +78,7 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { trainingId } = req.body;
+    const { trainingId, mode, personaId } = req.body;
     if (!trainingId || typeof trainingId !== "string") {
       return res.status(400).json({ error: "trainingId is required" });
     }
@@ -59,13 +91,25 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Training not found" });
     }
 
-    const avatar = generateAvatarProfile();
+    const resolvedMode = resolveTrainingMode(mode, training.mode);
+    const { persona, avatar } = await selectPersona(training.organizationId, personaId);
     const trainingSession = await prisma.trainingSession.create({
       data: {
         trainingId: training.id,
         userId: session.user.id,
         avatarName: avatar.name,
         avatarPersona: avatar.persona,
+        mode: resolvedMode,
+        personaId: persona?.id ?? null,
+        personaSnapshot: persona
+          ? {
+              id: persona.id,
+              name: persona.name,
+              description: persona.description,
+              traits: persona.traits,
+              tags: persona.tags,
+            }
+          : undefined,
       },
     });
 
@@ -77,6 +121,8 @@ router.post("/", async (req: Request, res: Response) => {
       systemPrompt: training.systemPrompt,
       avatar,
       topK,
+      mode: toGraphMode(resolvedMode),
+      personaId: persona?.id ?? null,
     });
 
     await roomService.createRoom({
