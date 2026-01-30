@@ -24,6 +24,7 @@ export interface ConversationGraphState {
   trainingId: string;
   systemPrompt?: string;
   avatar: AvatarProfile;
+  mode?: "simulation" | "guided_interview";
   topK?: number;
   ragResults?: RAGResult[];
   response?: string;
@@ -49,6 +50,7 @@ const ConversationStateAnnotation = Annotation.Root({
   trainingId: Annotation<string>(),
   systemPrompt: Annotation<string | undefined>(),
   avatar: Annotation<AvatarProfile>(),
+  mode: Annotation<"simulation" | "guided_interview" | undefined>(),
   topK: Annotation<number | undefined>(),
   ragResults: Annotation<RAGResult[] | undefined>(),
   response: Annotation<string | undefined>(),
@@ -146,13 +148,20 @@ export function createConversationGraph(config: ConversationGraphConfig) {
       const persona = state.avatar?.persona
         ? `${state.avatar.name}: ${state.avatar.persona}`
         : state.avatar?.name ?? "";
+      const mode = state.mode ?? "simulation";
+      const modeInstruction =
+        mode === "guided_interview"
+          ? "You are a call center training interviewer. Ask the trainee targeted questions about product knowledge, objection handling, and company policies. Keep responses concise and drive the trainee to explain their reasoning."
+          : "You are a call center training customer simulation.";
 
       const systemParts = [
-        "You are a call center training customer simulation.",
+        modeInstruction,
         state.systemPrompt ? `Training instructions:\n${state.systemPrompt}` : "",
         persona ? `Persona: ${persona}` : "",
         ragContext ? `Knowledge base context:\n${ragContext}` : "",
-        "Respond as the customer with concise, actionable replies.",
+        mode === "guided_interview"
+          ? "Interview the trainee and provide a single question or follow-up prompt at a time."
+          : "Respond as the customer with concise, actionable replies.",
       ].filter((part) => part.trim().length > 0);
 
       const messages = [
