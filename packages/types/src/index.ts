@@ -136,6 +136,12 @@ export interface Assessment {
   strengths: string[];
   improvements: string[];
   coachingReport?: Record<string, unknown>;
+  citations?: Array<{
+    documentId: string;
+    chunkContent: string;
+    deviation: string;
+    recommendation: string;
+  }>;
   createdAt: Date;
 }
 

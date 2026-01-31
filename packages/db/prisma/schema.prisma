@@ -244,6 +244,7 @@ model Assessment {
   categories   Json?
   highlights   Json?
   coachingReport Json?
+  citations    Json? // Array of {documentId, chunkContent, deviation, recommendation}
   createdAt    DateTime @default(now())
 
   session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
