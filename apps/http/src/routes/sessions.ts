@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { RoomServiceClient } from "livekit-server-sdk";
+import { RoomServiceClient, EgressClient } from "livekit-server-sdk";
 import { fromNodeHeaders } from "better-auth/node";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -16,6 +16,12 @@ import { resolveTrainingMode, toGraphMode } from "../lib/sessions.js";
 
 const router = Router();
 const roomService = new RoomServiceClient(
+  env.LIVEKIT_URL,
+  env.LIVEKIT_API_KEY,
+  env.LIVEKIT_API_SECRET
+);
+
+const egressClient = new EgressClient(
   env.LIVEKIT_URL,
   env.LIVEKIT_API_KEY,
   env.LIVEKIT_API_SECRET
@@ -130,6 +136,34 @@ router.post("/", async (req: Request, res: Response) => {
       metadata: roomMetadata,
     });
 
+    // Start egress recording
+    let egressId: string | null = null;
+    try {
+      const egressInfo = await egressClient.startRoomCompositeEgress(
+        roomName,
+        {
+          file: {
+            filepath: `recordings/${roomName}-${Date.now()}.mp4`,
+          } as any,
+        }
+      );
+      egressId = egressInfo.egressId;
+      
+      await prisma.trainingSession.update({
+        where: { id: trainingSession.id },
+        data: {
+          recordingStatus: "RECORDING",
+          recordingMetadata: {
+            egressId,
+            roomName,
+            startedAt: new Date().toISOString(),
+          },
+        },
+      });
+    } catch (egressError) {
+      console.error("Failed to start egress recording:", egressError);
+    }
+
     const dispatch = await dispatchAgentToRoom(roomName, {
       trainingId: training.id,
       sessionId: trainingSession.id,
@@ -142,6 +176,7 @@ router.post("/", async (req: Request, res: Response) => {
       trainingId: training.id,
       avatar,
       dispatch,
+      recording: egressId ? { egressId, status: "RECORDING" } : null,
     });
   } catch (error) {
     console.error("Error creating training session:", error);
@@ -330,6 +365,22 @@ router.post("/:id/end", async (req: Request, res: Response) => {
       },
     });
 
+    // Stop egress recording if active
+    const recordingMetadata = trainingSession.recordingMetadata as any;
+    if (recordingMetadata?.egressId) {
+      try {
+        await egressClient.stopEgress(recordingMetadata.egressId);
+        await prisma.trainingSession.update({
+          where: { id: req.params.id },
+          data: {
+            recordingStatus: "COMPLETED",
+          },
+        });
+      } catch (egressError) {
+        console.error("Failed to stop egress recording:", egressError);
+      }
+    }
+
     generateAssessment(
       {
         transcript: transcript as TranscriptData,
@@ -419,6 +470,37 @@ router.get("/:id/assessment", async (req: Request, res: Response) => {
     return res.json(trainingSession.assessment);
   } catch (error) {
     console.error("Error fetching assessment:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/:id/replay", async (req: Request, res: Response) => {
+  try {
+    const session = await getSession(req);
+    if (!session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const trainingSession = await prisma.trainingSession.findFirst({
+      where: { id: req.params.id, userId: session.user.id },
+      select: {
+        recordingUrl: true,
+        recordingStatus: true,
+        transcript: true,
+      },
+    });
+
+    if (!trainingSession) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    return res.json({
+      audioUrl: trainingSession.recordingUrl,
+      recordingStatus: trainingSession.recordingStatus,
+      transcript: trainingSession.transcript,
+    });
+  } catch (error) {
+    console.error("Error fetching replay:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
