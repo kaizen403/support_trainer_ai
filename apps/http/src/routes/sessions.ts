@@ -345,11 +345,17 @@ router.post("/:id/end", async (req: Request, res: Response) => {
           data: {
             sessionId: trainingSession.id,
             score: result.score,
+            overallScore: result.overallScore,
+            clarityScore: result.clarityScore,
+            protocolAdherenceScore: result.protocolAdherenceScore,
+            empathyScore: result.empathyScore,
+            conversionPotentialScore: result.conversionPotentialScore,
             feedback: result.feedback,
             strengths: result.strengths,
             improvements: result.improvements,
             categories: (result as any).categories,
             highlights: (result as any).highlights,
+            coachingReport: result.coachingReport,
           } as any,
         });
         console.log(`Assessment created for session ${trainingSession.id}`);
