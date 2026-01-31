@@ -16,5 +16,8 @@
     "happy-dom": "^20.3.9",
     "turbo": "^2.7.6",
     "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "recharts": "^3.7.0"
   }
 }
