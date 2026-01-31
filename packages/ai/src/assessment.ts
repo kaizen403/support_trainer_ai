@@ -40,6 +40,15 @@ export interface AssessmentResult {
     type: "positive" | "negative";
     note: string;
   }[];
+  clarityScore: number;
+  protocolAdherenceScore: number;
+  empathyScore: number;
+  conversionPotentialScore: number;
+  overallScore: number;
+  coachingReport: {
+    summary: string;
+    recommendations: string[];
+  };
 }
 
 const AssessmentSchema = z.object({
@@ -60,6 +69,15 @@ const AssessmentSchema = z.object({
       note: z.string(),
     })
   ),
+  clarityScore: z.number().int().min(0).max(100),
+  protocolAdherenceScore: z.number().int().min(0).max(100),
+  empathyScore: z.number().int().min(0).max(100),
+  conversionPotentialScore: z.number().int().min(0).max(100),
+  overallScore: z.number().int().min(0).max(100),
+  coachingReport: z.object({
+    summary: z.string(),
+    recommendations: z.array(z.string()),
+  }),
 });
 
 function normalizeTranscript(
@@ -105,6 +123,12 @@ Provide your assessment as JSON with:
 - improvements: array of 1-3 areas for improvement (empty if excellent)
 - categories: object with empathy, clarity, resolution, professionalism (each with { score: 0-100, notes: string })
 - highlights: array of { quote: string, type: "positive" | "negative", note: string } objects capturing key moments
+- clarityScore: integer 0-100 (how clearly the agent communicated)
+- protocolAdherenceScore: integer 0-100 (how well the agent followed call protocols and procedures)
+- empathyScore: integer 0-100 (how empathetic the agent was to customer needs)
+- conversionPotentialScore: integer 0-100 (how likely the agent was to convert or resolve the customer need)
+- overallScore: integer 0-100 (equal-weight average of clarityScore, protocolAdherenceScore, empathyScore, conversionPotentialScore)
+- coachingReport: object with summary (overall summary) and recommendations (array of specific coaching suggestions)
 
 Be specific and actionable. Reference actual moments from the conversation.`;
 }
@@ -167,5 +191,11 @@ Respond with valid JSON only.`;
     improvements: validated.improvements,
     categories: validated.categories,
     highlights: validated.highlights,
+    clarityScore: validated.clarityScore,
+    protocolAdherenceScore: validated.protocolAdherenceScore,
+    empathyScore: validated.empathyScore,
+    conversionPotentialScore: validated.conversionPotentialScore,
+    overallScore: validated.overallScore,
+    coachingReport: validated.coachingReport,
   };
 }
