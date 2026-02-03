@@ -84,6 +84,7 @@ model Organization {
   trainings   Training[]
   knowledgeDocuments KnowledgeDocument[]
   personas    Persona[]
+  scenarios   Scenario[]
 }
 
 model Member {
@@ -140,6 +141,24 @@ model Training {
   personas           Persona[]
 }
 
+model Scenario {
+  id             String               @id @default(cuid())
+  organizationId String
+  name           String
+  description    String
+  personaPreset  ScenarioPersonaPreset
+  temperament    String
+  expertise       String
+  complexity     String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  knowledgeDocuments KnowledgeDocument[]
+
+  @@index([organizationId])
+}
+
 model KnowledgeDocument {
   id         String                       @id @default(cuid())
   trainingId String?
@@ -156,6 +175,7 @@ model KnowledgeDocument {
   training     Training?    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   personas     Persona[]
+  scenarios    Scenario[]
 
   @@index([trainingId])
   @@index([organizationId])
@@ -207,6 +227,14 @@ enum DocumentType {
   OBJECTION
   POLICY
   OTHER
+}
+
+enum ScenarioPersonaPreset {
+  RUDE
+  CHILL
+  UNEXPECTED
+  NEUTRAL
+  DEMANDING
 }
 
 enum DocumentFormat {
