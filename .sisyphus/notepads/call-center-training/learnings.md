@@ -137,3 +137,50 @@ The code pushes to `/dashboard`, but the physical file handling the role-based r
 - Created `docs/production-checklist.md` as a source of truth for release readiness and verification.
 - Implemented robust mocking for browser Media APIs and external services (better-auth, LiveKit) to ensure reliable E2E execution in isolated environments.
 - Added missing 'zod' dependency to packages/ai/package.json to fix build error in packages/ai/src/assessment.ts.
+
+## 2026-01-31: Scenario Configuration & Command Center Implementation
+
+### API Integration Patterns
+- Documents API: `GET /api/documents/:trainingId`, `POST /api/documents/:trainingId/upload`, `DELETE /api/documents/:trainingId/:documentId`
+- Sessions API: `GET /api/sessions`, `POST /api/sessions`, `GET /api/sessions/analytics`
+- Trainings API: `GET /api/trainings`, `PUT /api/trainings/:id` for saving config
+
+### File Upload Implementation
+- Used FormData with fetch API for multipart/form-data uploads
+- Implemented progress simulation with setInterval for better UX
+- File type validation on both client (extension check) and server (mime type)
+- Supported formats: PDF, TXT, DOCX, MD
+
+### State Management
+- Used React useState and useEffect for local state
+- Implemented auto-refresh with setInterval for real-time data (30s interval)
+- Training selector updates documents and persona settings via useEffect
+
+### UI Components Created
+- Select component (@radix-ui/react-select) for dropdowns
+- Progress component for upload progress indication
+- Badge variants for status indicators (indexed, processing, failed)
+
+### Persona Settings Storage
+- Stored in training.config.persona as JSON object
+- Three dimensions: temperament, expertise, complexity
+- Each with 4 levels (calm→aggressive, beginner→expert, low→extreme)
+
+### Session Creation Flow
+- Quick start templates with predefined configurations
+- Opens new session in separate tab for preparation phase
+- Real-time session status with active indicator pulse animation
+
+### Testing
+- All 22 E2E tests passed
+- Tests cover: auth flows, CRUD operations, session lifecycle, assessments
+
+## 2026-02-03 Task 1: Scenario Model Addition
+- Added Scenario model to Prisma schema with fields: id, organizationId, name, description, personaPreset (enum), temperament, expertise, complexity, createdAt, updatedAt
+- Added relation from Organization to scenarios (one-to-many)
+- Added relation from KnowledgeDocument to scenarios (many-to-many via implicit array)
+- Added @@index([organizationId]) to Scenario model for query optimization
+- Used existing ScenarioPersonaPreset enum that was already present in schema
+- Applied schema changes using `prisma db push` due to drift detected between migration history and actual database schema
+- Prisma Client successfully generated with Scenario model available
+- Verified Scenario model via: `bun -e "import { PrismaClient } from '@prisma/client'; const p = new PrismaClient(); console.log('scenario' in p)"`

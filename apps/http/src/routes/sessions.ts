@@ -91,6 +91,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const training = await prisma.training.findFirst({
       where: { id: trainingId },
+      include: { scenario: true },
     });
 
     if (!training) {
@@ -129,6 +130,14 @@ router.post("/", async (req: Request, res: Response) => {
       topK,
       mode: toGraphMode(resolvedMode),
       personaId: persona?.id ?? null,
+      scenario: training.scenario
+        ? {
+            personaPreset: training.scenario.personaPreset,
+            temperament: training.scenario.temperament,
+            expertise: training.scenario.expertise,
+            complexity: training.scenario.complexity,
+          }
+        : null,
     });
 
     await roomService.createRoom({

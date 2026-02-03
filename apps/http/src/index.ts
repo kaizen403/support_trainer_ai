@@ -7,6 +7,7 @@ import trainingsRouter from "./routes/trainings.js";
 import documentsRouter from "./routes/documents.js";
 import sessionsRouter from "./routes/sessions.js";
 import teamRouter from "./routes/team.js";
+import scenariosRouter from "./routes/scenarios.js";
 
 const app = express();
 const port = env.PORT_HTTP;
@@ -28,6 +29,7 @@ app.use("/api/trainings", trainingsRouter);
 app.use("/api/documents", documentsRouter);
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/team", teamRouter);
+app.use("/api/scenarios", scenariosRouter);
 
 app.listen(port, () => {
   console.log(`HTTP API listening on http://localhost:${port}`);

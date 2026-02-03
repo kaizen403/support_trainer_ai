@@ -79,7 +79,7 @@ const avatarProfiles: AvatarProfile[] = [
     name: "Noah Brooks",
     persona:
       "A time-pressed customer who wants concise options and a recommended next step.",
-    voiceId: "TxGEqnHWrfWFTf9X9X9D",
+    voiceId: "TX3LPaxmHKxFdv7VOQHJ",
   },
 ];
 

@@ -30,6 +30,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2, Eye } from "lucide-react";
 import Link from "next/link";
@@ -43,10 +50,24 @@ interface Training {
   updatedAt: string;
 }
 
+interface Scenario {
+  id: string;
+  name: string;
+  description: string;
+  personaPreset: 'RUDE' | 'CHILL' | 'UNEXPECTED' | 'NEUTRAL' | 'DEMANDING';
+  temperament: string;
+  expertise: string;
+  complexity: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface TrainingFormData {
   name: string;
   description: string;
   systemPrompt: string;
+  scenarioId?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -54,7 +75,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 export default function TrainingsPage() {
   const { data: session } = useSession();
   const [trainings, setTrainings] = useState<Training[]>([]);
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -64,6 +87,7 @@ export default function TrainingsPage() {
     name: "",
     description: "",
     systemPrompt: "",
+    scenarioId: undefined,
   });
 
   const role = session && "member" in session
@@ -87,9 +111,32 @@ export default function TrainingsPage() {
     }
   };
 
+  const fetchScenarios = async () => {
+    setScenariosLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/scenarios`, {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setScenarios(data);
+      }
+    } catch {
+      toast.error("Failed to fetch scenarios");
+    } finally {
+      setScenariosLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTrainings();
   }, []);
+
+  useEffect(() => {
+    if (isCreateOpen) {
+      fetchScenarios();
+    }
+  }, [isCreateOpen]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +153,7 @@ export default function TrainingsPage() {
       if (response.ok) {
         toast.success("Training created successfully");
         setIsCreateOpen(false);
-        setFormData({ name: "", description: "", systemPrompt: "" });
+        setFormData({ name: "", description: "", systemPrompt: "", scenarioId: undefined });
         fetchTrainings();
       } else {
         const error = await response.json();
@@ -254,6 +301,38 @@ export default function TrainingsPage() {
                       onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
                       required
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="scenario">Scenario (Optional)</Label>
+                    {scenariosLoading ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading scenarios...
+                      </div>
+                    ) : scenarios.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No scenarios available. Create scenarios in Scenario Configuration.
+                      </p>
+                    ) : (
+                      <Select
+                        value={formData.scenarioId || "none"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, scenarioId: value === "none" ? undefined : value })
+                        }
+                      >
+                        <SelectTrigger id="scenario">
+                          <SelectValue placeholder="Select a scenario (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {scenarios.map((scenario) => (
+                            <SelectItem key={scenario.id} value={scenario.id}>
+                              {scenario.name} ({scenario.personaPreset.toLowerCase()})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
                 <DialogFooter>

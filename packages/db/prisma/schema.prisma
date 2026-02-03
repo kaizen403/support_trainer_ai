@@ -131,14 +131,19 @@ model Training {
   mode           TrainingMode @default(SIMULATION)
   skillTags      String[] @default([])
   config         Json?
+  scenarioId      String?
+  shareToken      String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  scenario           Scenario?          @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
   knowledgeDocuments KnowledgeDocument[]
   sessions           TrainingSession[]
   assignments        Assignment[]
   personas           Persona[]
+
+  @@index([shareToken])
 }
 
 model Scenario {
@@ -155,6 +160,7 @@ model Scenario {
 
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   knowledgeDocuments KnowledgeDocument[]
+  trainings          Training[]
 
   @@index([organizationId])
 }

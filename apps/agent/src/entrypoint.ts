@@ -20,6 +20,15 @@ import {
 import { prisma } from "@repo/db";
 import { randomUUID } from "node:crypto";
 
+type PersonaPreset = "RUDE" | "CHILL" | "UNEXPECTED" | "NEUTRAL" | "DEMANDING";
+
+interface ScenarioMetadata {
+  personaPreset: PersonaPreset;
+  temperament: string;
+  expertise: string;
+  complexity: string;
+}
+
 interface RoomMetadata {
   trainingId?: string;
   sessionId?: string;
@@ -28,7 +37,16 @@ interface RoomMetadata {
   topK?: number;
   mode?: "simulation" | "guided_interview";
   personaId?: string;
+  scenario?: ScenarioMetadata | null;
 }
+
+const PERSONA_PRESET_INSTRUCTIONS: Record<PersonaPreset, string> = {
+  RUDE: "You are frustrated and angry. Use aggressive language, interrupt frequently, and show impatience. Be hostile and difficult to work with.",
+  CHILL: "You are relaxed and easy-going. Be cooperative, friendly, and patient. Take your time and be understanding.",
+  UNEXPECTED: "You are unpredictable. Change topics suddenly, ask unexpected questions, and keep the trainee on their toes. Be surprising and unconventional.",
+  NEUTRAL: "You are professional and straightforward. Maintain a neutral, business-like tone. Be balanced and objective.",
+  DEMANDING: "You have high expectations and demand immediate solutions. Threaten to ask for a manager if not satisfied. Be persistent and uncompromising.",
+};
 
 const conversationGraph = createConversationGraph({
   retriever: async ({ trainingId, queryEmbedding, topK }: RetrievalRequest) => {
@@ -149,24 +167,40 @@ export default defineAgent({
   entry: async (ctx: JobContext) => {
     const metadata = parseRoomMetadata(ctx.room.metadata ?? undefined);
     const avatar = metadata.avatar ?? generateAvatarProfile();
-    const reliableKind = 0 as Parameters<
-      NonNullable<typeof ctx.room.localParticipant>["publishData"]
-    >[1];
+    const scenario = metadata.scenario;
+
+    // Log scenario info for debugging
+    if (scenario) {
+      console.log("[Agent] Scenario loaded:", {
+        personaPreset: scenario.personaPreset,
+        temperament: scenario.temperament,
+        expertise: scenario.expertise,
+        complexity: scenario.complexity,
+      });
+    } else {
+      console.log("[Agent] No scenario metadata - using default behavior");
+    }
+
     const publishTranscript = (payload: { sender: "user" | "agent"; text: string }) => {
       if (!payload.text.trim()) return;
       if (!ctx.room.localParticipant) return;
 
       void ctx.room.localParticipant
-        .publishData(Buffer.from(JSON.stringify(payload)), reliableKind)
+        .publishData(Buffer.from(JSON.stringify(payload)), { reliable: true })
         .catch((error) => {
           console.error("Failed to publish transcript", error);
         });
     };
 
+    // Build persona instruction based on scenario preset
+    const personaInstruction = scenario?.personaPreset
+      ? PERSONA_PRESET_INSTRUCTIONS[scenario.personaPreset]
+      : PERSONA_PRESET_INSTRUCTIONS.NEUTRAL;
+
     const modeInstruction =
       metadata.mode === "guided_interview"
         ? "You are a call center training interviewer. Ask concise, structured questions and wait for trainee responses."
-        : `You are ${avatar.name}. ${avatar.persona} Keep responses concise and actionable.`;
+        : `You are ${avatar.name}. ${avatar.persona} ${personaInstruction} Keep responses concise and actionable.`;
 
     const agent = new voice.Agent({
       instructions: modeInstruction,

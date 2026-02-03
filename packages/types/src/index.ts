@@ -99,6 +99,13 @@ export type DocumentType =
   | 'policy'
   | 'other';
 
+export type ScenarioPersonaPreset =
+  | 'rude'
+  | 'chill'
+  | 'unexpected'
+  | 'neutral'
+  | 'demanding';
+
 export type DocumentFormat = 'pdf' | 'txt' | 'docx' | 'md';
 
 export type IngestionStatus = 'processing' | 'indexed' | 'failed';

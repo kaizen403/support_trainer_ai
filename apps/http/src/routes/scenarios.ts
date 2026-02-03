@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { randomUUID } from "node:crypto";
 import { prisma } from "@repo/db";
 import { auth } from "../auth.js";
 import { fromNodeHeaders } from "better-auth/node";
@@ -13,10 +12,12 @@ async function getSession(req: Request) {
   return session;
 }
 
-// Skip admin check - allow all authenticated users
+// Skip admin check - allow all authenticated users (matches trainings.ts pattern)
 async function isAdmin(_userId: string, _organizationId: string): Promise<boolean> {
   return true;
 }
+
+const VALID_PERSONA_PRESETS = ["RUDE", "CHILL", "UNEXPECTED", "NEUTRAL", "DEMANDING"];
 
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -25,44 +26,14 @@ router.get("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Get all trainings without org filter
-    const trainings = await prisma.training.findMany({
+    // Get all scenarios without org filter (matches trainings.ts pattern)
+    const scenarios = await prisma.scenario.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        scenario: true,
-      },
     });
 
-    return res.json(trainings);
+    return res.json(scenarios);
   } catch (error) {
-    console.error("Error fetching trainings:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.get("/by-token/:token", async (req: Request, res: Response) => {
-  try {
-    const session = await getSession(req);
-    if (!session) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const training = await prisma.training.findFirst({
-      where: {
-        shareToken: req.params.token,
-      },
-      include: {
-        scenario: true,
-      },
-    });
-
-    if (!training) {
-      return res.status(404).json({ error: "Training not found" });
-    }
-
-    return res.json(training);
-  } catch (error) {
-    console.error("Error fetching training by token:", error);
+    console.error("Error fetching scenarios:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -74,22 +45,19 @@ router.get("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const training = await prisma.training.findFirst({
+    const scenario = await prisma.scenario.findFirst({
       where: {
         id: req.params.id,
       },
-      include: {
-        scenario: true,
-      },
     });
 
-    if (!training) {
-      return res.status(404).json({ error: "Training not found" });
+    if (!scenario) {
+      return res.status(404).json({ error: "Scenario not found" });
     }
 
-    return res.json(training);
+    return res.json(scenario);
   } catch (error) {
-    console.error("Error fetching training:", error);
+    console.error("Error fetching scenario:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -101,7 +69,7 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { name, description, systemPrompt, scenarioId } = req.body;
+    const { name, description, personaPreset, temperament, expertise, complexity } = req.body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return res.status(400).json({ error: "Name is required" });
@@ -109,36 +77,34 @@ router.post("/", async (req: Request, res: Response) => {
     if (!description || typeof description !== "string" || description.trim().length === 0) {
       return res.status(400).json({ error: "Description is required" });
     }
-    if (!systemPrompt || typeof systemPrompt !== "string" || systemPrompt.trim().length === 0) {
-      return res.status(400).json({ error: "System prompt is required" });
+    if (!personaPreset || !VALID_PERSONA_PRESETS.includes(personaPreset)) {
+      return res.status(400).json({ error: "Valid personaPreset is required (RUDE, CHILL, UNEXPECTED, NEUTRAL, DEMANDING)" });
+    }
+    if (!temperament || typeof temperament !== "string" || temperament.trim().length === 0) {
+      return res.status(400).json({ error: "Temperament is required" });
+    }
+    if (!expertise || typeof expertise !== "string" || expertise.trim().length === 0) {
+      return res.status(400).json({ error: "Expertise is required" });
+    }
+    if (!complexity || typeof complexity !== "string" || complexity.trim().length === 0) {
+      return res.status(400).json({ error: "Complexity is required" });
     }
 
-    if (scenarioId) {
-      const scenario = await prisma.scenario.findFirst({
-        where: { id: scenarioId },
-      });
-      if (!scenario) {
-        return res.status(404).json({ error: "Scenario not found" });
-      }
-    }
-
-    const training = await prisma.training.create({
+    const scenario = await prisma.scenario.create({
       data: {
         name: name.trim(),
         description: description.trim(),
-        systemPrompt: systemPrompt.trim(),
+        personaPreset,
+        temperament: temperament.trim(),
+        expertise: expertise.trim(),
+        complexity: complexity.trim(),
         organizationId: "default", // Placeholder org
-        scenarioId: scenarioId || null,
-        shareToken: randomUUID(),
-      },
-      include: {
-        scenario: true,
       },
     });
 
-    return res.status(201).json(training);
+    return res.status(201).json(scenario);
   } catch (error) {
-    console.error("Error creating training:", error);
+    console.error("Error creating scenario:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -150,17 +116,17 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const existing = await prisma.training.findFirst({
+    const existing = await prisma.scenario.findFirst({
       where: {
         id: req.params.id,
       },
     });
 
     if (!existing) {
-      return res.status(404).json({ error: "Training not found" });
+      return res.status(404).json({ error: "Scenario not found" });
     }
 
-    const { name, description, systemPrompt } = req.body;
+    const { name, description, personaPreset, temperament, expertise, complexity } = req.body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return res.status(400).json({ error: "Name is required" });
@@ -168,22 +134,34 @@ router.put("/:id", async (req: Request, res: Response) => {
     if (!description || typeof description !== "string" || description.trim().length === 0) {
       return res.status(400).json({ error: "Description is required" });
     }
-    if (!systemPrompt || typeof systemPrompt !== "string" || systemPrompt.trim().length === 0) {
-      return res.status(400).json({ error: "System prompt is required" });
+    if (!personaPreset || !VALID_PERSONA_PRESETS.includes(personaPreset)) {
+      return res.status(400).json({ error: "Valid personaPreset is required (RUDE, CHILL, UNEXPECTED, NEUTRAL, DEMANDING)" });
+    }
+    if (!temperament || typeof temperament !== "string" || temperament.trim().length === 0) {
+      return res.status(400).json({ error: "Temperament is required" });
+    }
+    if (!expertise || typeof expertise !== "string" || expertise.trim().length === 0) {
+      return res.status(400).json({ error: "Expertise is required" });
+    }
+    if (!complexity || typeof complexity !== "string" || complexity.trim().length === 0) {
+      return res.status(400).json({ error: "Complexity is required" });
     }
 
-    const training = await prisma.training.update({
+    const scenario = await prisma.scenario.update({
       where: { id: req.params.id },
       data: {
         name: name.trim(),
         description: description.trim(),
-        systemPrompt: systemPrompt.trim(),
+        personaPreset,
+        temperament: temperament.trim(),
+        expertise: expertise.trim(),
+        complexity: complexity.trim(),
       },
     });
 
-    return res.json(training);
+    return res.json(scenario);
   } catch (error) {
-    console.error("Error updating training:", error);
+    console.error("Error updating scenario:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -195,23 +173,23 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const existing = await prisma.training.findFirst({
+    const existing = await prisma.scenario.findFirst({
       where: {
         id: req.params.id,
       },
     });
 
     if (!existing) {
-      return res.status(404).json({ error: "Training not found" });
+      return res.status(404).json({ error: "Scenario not found" });
     }
 
-    await prisma.training.delete({
+    await prisma.scenario.delete({
       where: { id: req.params.id },
     });
 
-    return res.json({ message: "Training deleted" });
+    return res.json({ message: "Scenario deleted" });
   } catch (error) {
-    console.error("Error deleting training:", error);
+    console.error("Error deleting scenario:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

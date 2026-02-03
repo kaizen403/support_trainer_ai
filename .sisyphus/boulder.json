@@ -1,0 +1,14 @@
+{
+  "active_plan": "/home/kaizen/sales_training/.sisyphus/plans/call-center-training-v2.md",
+  "started_at": "2026-02-03T12:14:29.110Z",
+  "completed_at": "2026-02-03T16:25:00.000Z",
+  "session_ids": [
+    "ses_3dcf487b4ffepxaUAlEJD7xEIl",
+    "ses_3dc856cdfffetYWM8EKi32PhBq",
+    "ses_3ecc77ec0ffeo4K9y59usBxMPU"
+  ],
+  "plan_name": "call-center-training-v2",
+  "status": "completed",
+  "tasks_completed": 12,
+  "tasks_total": 12
+}
