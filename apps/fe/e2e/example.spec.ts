@@ -784,7 +784,6 @@ test.describe('Task 18 E2E Scenarios', () => {
     await page.goto(`/employee/session/${sessionId}`);
     
     await expect(page.getByRole('button', { name: 'End Session' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Transcript', { exact: true })).toBeVisible();
     await expect(page.getByText('AI Trainer')).toBeVisible();
   });
 

@@ -451,63 +451,6 @@ function ActiveTrainingSession({ sessionId, sessionData }: ActiveTrainingSession
           </Card>
         )}
 
-        <Card className="flex-1 flex flex-col min-h-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Conversation Stream</CardTitle>
-            <CardDescription>Color-coded techniques and missed opportunities</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0 relative">
-            <div 
-              ref={scrollRef}
-              className="absolute inset-0 overflow-y-auto p-4 space-y-3"
-            >
-              {transcripts.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <p>Conversation will appear here...</p>
-                  <p className="text-xs mt-2">Start speaking to begin the training session</p>
-                </div>
-              ) : (
-                transcripts.map((entry) => {
-                  const styles = getCategoryStyles(entry.category)
-                  const isUser = entry.role === "user"
-                  
-                  return (
-                    <div 
-                      key={entry.id} 
-                      className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className={isUser ? 'bg-secondary' : 'bg-primary/10 text-primary'}>
-                          {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={`max-w-[80%] space-y-1 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
-                        <div className={`rounded-lg p-3 text-sm ${
-                          isUser 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-muted'
-                        }`}>
-                          {entry.text}
-                        </div>
-                        {entry.category && entry.category !== "neutral" && (
-                          <div className={`rounded-md border ${styles.border} ${styles.bg} p-2 text-xs`}>
-                            <Badge className={`${styles.badge} text-white text-xs`}>
-                              {styles.icon && <span className="mr-1">{styles.icon}</span>}
-                              {styles.label}
-                            </Badge>
-                            {entry.feedback && (
-                              <p className="mt-1 text-muted-foreground">{entry.feedback}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardContent className="p-4">

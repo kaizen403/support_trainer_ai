@@ -19,7 +19,7 @@ export function VoiceVisualizer({
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | null>(null)
   const [frequencyData, setFrequencyData] = useState<Uint8Array>(new Uint8Array(barCount))
 
   useEffect(() => {

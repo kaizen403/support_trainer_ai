@@ -22,6 +22,10 @@ import { randomUUID } from "node:crypto";
 
 type PersonaPreset = "RUDE" | "CHILL" | "UNEXPECTED" | "NEUTRAL" | "DEMANDING";
 
+const DEFAULT_VOICE_ID = "bIHbv24MWmeRgasZH58o";
+const LEGACY_VOICE_ID = "TxGEqnHWrfWFTf9X9X9D";
+const REPLACEMENT_VOICE_ID = "TX3LPaxmHKxFdv7VOQHJ";
+
 interface ScenarioMetadata {
   personaPreset: PersonaPreset;
   temperament: string;
@@ -85,6 +89,12 @@ function parseRoomMetadata(raw?: string): RoomMetadata {
   } catch {
     return {};
   }
+}
+
+function resolveVoiceId(value?: string) {
+  if (!value) return DEFAULT_VOICE_ID;
+  if (value === LEGACY_VOICE_ID) return REPLACEMENT_VOICE_ID;
+  return value;
 }
 
 function toConversationMessages(chatCtx: llm.ChatContext): ConversationMessage[] {
@@ -210,7 +220,7 @@ export default defineAgent({
       stt: new deepgram.STT({ apiKey: env.DEEPGRAM_API_KEY }),
       tts: new elevenlabs.TTS({
         apiKey: env.ELEVEN_API_KEY,
-        voiceId: avatar.voiceId,
+        voiceId: resolveVoiceId(avatar.voiceId),
       }),
       llm: new LLMAdapter(conversationGraph, {
         ...metadata,

@@ -240,36 +240,6 @@ function ActiveSession({ sessionId }: { sessionId: string }) {
             </Card>
         </div>
 
-        <Card className="w-1/3 flex flex-col h-full max-h-[calc(100vh-2rem)]">
-            <CardHeader>
-                <CardTitle className="text-lg">Transcript</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0 relative">
-                <div ref={scrollRef} className="absolute inset-0 overflow-y-auto p-4 space-y-4">
-                    {transcripts.length === 0 && (
-                        <div className="text-center text-muted-foreground mt-10">
-                            Transcript will appear here...
-                        </div>
-                    )}
-                    {transcripts.map((t) => (
-                        <div key={t.id} className={`flex gap-3 ${t.isBot ? 'flex-row' : 'flex-row-reverse'}`}>
-                            <Avatar className="h-8 w-8">
-                                <AvatarFallback className={t.isBot ? 'bg-primary/10 text-primary' : 'bg-secondary'}>
-                                    {t.isBot ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className={`rounded-lg p-3 max-w-[80%] text-sm ${
-                                t.isBot 
-                                    ? 'bg-muted text-foreground' 
-                                    : 'bg-primary text-primary-foreground'
-                            }`}>
-                                {t.text}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
     </div>
   )
 }

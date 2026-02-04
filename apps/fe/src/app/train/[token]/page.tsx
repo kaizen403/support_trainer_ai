@@ -557,51 +557,6 @@ function ActiveTrainingSession({ sessionId, training, avatar }: ActiveTrainingSe
         </Card>
       </div>
 
-      <Card className="w-80 flex flex-col h-full shrink-0">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            Transcript
-          </CardTitle>
-          <CardDescription>Live conversation</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-hidden p-0 relative">
-          <div 
-            ref={scrollRef}
-            className="absolute inset-0 overflow-y-auto p-4 space-y-3"
-          >
-            {transcripts.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <p>Conversation will appear here...</p>
-                <p className="text-xs mt-2">Start speaking to begin</p>
-              </div>
-            ) : (
-              transcripts.map((entry) => {
-                const isUser = entry.role === "user"
-                return (
-                  <div 
-                    key={entry.id} 
-                    className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-                  >
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className={isUser ? 'bg-secondary' : 'bg-primary/10 text-primary'}>
-                        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`max-w-[80%] rounded-lg p-3 text-sm ${
-                      isUser 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted'
-                    }`}>
-                      {entry.text}
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
