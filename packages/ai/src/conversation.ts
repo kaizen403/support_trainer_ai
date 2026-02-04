@@ -58,28 +58,28 @@ const ConversationStateAnnotation = Annotation.Root({
 
 const avatarProfiles: AvatarProfile[] = [
   {
-    name: "Maya Patel",
+    name: "Raj Kumar",
     persona:
       "A friendly but impatient customer who values quick resolutions and clear explanations.",
-    voiceId: "21m00Tcm4TlvDq8ikWAM",
+    voiceId: "wJ5MX7uuKXZwFqGdWM4N",
   },
   {
-    name: "James Carter",
+    name: "Nikhil Sharma",
     persona:
       "A skeptical customer who asks detailed questions and needs reassurance before agreeing.",
-    voiceId: "ErXwobaYiN019PkySvjV",
+    voiceId: "vW1NxlzqX8WROgpQAghR",
   },
   {
-    name: "Elena Torres",
+    name: "Sridhar Iyer",
     persona:
       "A polite customer with a complex issue who expects empathy and step-by-step guidance.",
-    voiceId: "EXAVITQu4vr4xnSDxMaL",
+    voiceId: "4djJiaeiIiFtglUCWGdA",
   },
   {
-    name: "Noah Brooks",
+    name: "Bunty Singh",
     persona:
       "A time-pressed customer who wants concise options and a recommended next step.",
-    voiceId: "TX3LPaxmHKxFdv7VOQHJ",
+    voiceId: "nwj0s2LU9bDWRKND5yzA",
   },
 ];
 

@@ -22,9 +22,9 @@ import { randomUUID } from "node:crypto";
 
 type PersonaPreset = "RUDE" | "CHILL" | "UNEXPECTED" | "NEUTRAL" | "DEMANDING";
 
-const DEFAULT_VOICE_ID = "bIHbv24MWmeRgasZH58o";
+const DEFAULT_VOICE_ID = "wJ5MX7uuKXZwFqGdWM4N";
 const LEGACY_VOICE_ID = "TxGEqnHWrfWFTf9X9X9D";
-const REPLACEMENT_VOICE_ID = "TX3LPaxmHKxFdv7VOQHJ";
+const REPLACEMENT_VOICE_ID = "wJ5MX7uuKXZwFqGdWM4N";
 
 interface ScenarioMetadata {
   personaPreset: PersonaPreset;
@@ -221,6 +221,7 @@ export default defineAgent({
       tts: new elevenlabs.TTS({
         apiKey: env.ELEVEN_API_KEY,
         voiceId: resolveVoiceId(avatar.voiceId),
+        model: "eleven_turbo_v2_5",
       }),
       llm: new LLMAdapter(conversationGraph, {
         ...metadata,

@@ -26,8 +26,22 @@ vi.mock("../auth.js", () => ({
   },
 }));
 
-const mockPrisma = vi.mocked(prisma);
-const mockAuth = vi.mocked(auth);
+// Use type assertions for mock functions to avoid deep type checking issues
+const mockPrisma = prisma as unknown as {
+  scenario: {
+    findMany: ReturnType<typeof vi.fn>;
+    findFirst: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+  };
+};
+
+const mockAuth = auth as unknown as {
+  api: {
+    getSession: ReturnType<typeof vi.fn>;
+  };
+};
 
 // Helper to create mock request
 function createMockRequest(
